@@ -1,1 +1,63 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload</title>
+</head>
+<body>
+
+<input type="file" id="imageInput" accept=".png">
+<button onclick="uploadImage()">Upload Image</button>
+
+<script>
+function uploadImage() {
+    const input = document.getElementById('imageInput');
+    const file = input.files[0];
+
+    if (!file) {
+        alert('Please select an image file.');
+        return;
+    }
+
+    const fileType = file.type;
+
+    // Check if the file type is PNG
+    if (fileType !== 'image/png') {
+        alert('Invalid file type. Only PNG files are accepted.');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const imageBuffer = event.target.result;
+        sendDataToServer(imageBuffer);
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
+function sendDataToServer(imageBuffer) {
+    const ws = new WebSocket('ws://localhost:3000');
+
+    ws.onopen = () => {
+        console.log('WebSocket connection opened');
+        
+        // Send the image as binary data
+        ws.send(new Uint8Array(imageBuffer));
+    };
+
+    ws.onmessage = (event) => {
+        console.log(`Server response: ${event.data}`);
+        ws.close();
+    };
+
+    ws.onclose = (event) => {
+        console.log(`WebSocket connection closed: ${event.code} - ${event.reason}`);
+    };
+}
+</script>
+
+</body>
+</html>
